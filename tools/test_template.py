@@ -35,7 +35,7 @@ def main():
         index.mkdir(parents=True)
         entry = '{url="https://example.invalid/candidate.tar.gz",sha256="fixture"}'
         descriptor = ('package={spec="1",namespace=' + json.dumps(namespace) + ',name=' + json.dumps(name) +
-                      ',description="Installed template fixture",type="package",mcpp="mcpp.toml",xpm={')
+                      ',description="Installed template fixture",type="package",xpm={')
         descriptor += ",".join(platform + "={[" + json.dumps(version) + "]=" + entry + "}"
                                for platform in ("linux", "macosx", "windows")) + "}}\n"
         (index / (identity + ".lua")).write_text(descriptor)
