@@ -11,8 +11,6 @@ concurrency:
   cancel-in-progress: true
 env:
   MCPP_VERSION: "2026.11.18.1"
-  # See ci.yml: compat.wuffs 0.3.6 from the mcpp-index candidate until it is published.
-  MCPP_INDEX_CANDIDATE: "ca42ba2b8bef4c1e68d5cbe21740be1b755d8e82"
 jobs:
   templates:
     runs-on: ubuntu-24.04
@@ -26,10 +24,5 @@ jobs:
           curl -L -fsS -o "$archive" "https://github.com/mcpp-community/mcpp/releases/download/v${MCPP_VERSION}/$archive"
           tar -xzf "$archive"
           echo "$PWD/mcpp-${MCPP_VERSION}-linux-x86_64/bin" >> "$GITHUB_PATH"
-      - name: Candidate index
-        run: |
-          git init -q "$RUNNER_TEMP/index"
-          git -C "$RUNNER_TEMP/index" fetch -q --depth 1 https://github.com/mcpplibs/mcpp-index "$MCPP_INDEX_CANDIDATE"
-          git -C "$RUNNER_TEMP/index" checkout -q FETCH_HEAD
       - name: Actual scaffold, strict build and run of the default template (decode)
-        run: python3 tools/test_template.py --toolchain gcc@16.1.0 --index "$RUNNER_TEMP/index"
+        run: python3 tools/test_template.py --toolchain gcc@16.1.0

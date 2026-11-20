@@ -14,12 +14,6 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
-env:
-  # compat.wuffs 0.3.6 is in mcpp-index#855 and not yet in the published index:
-  # until it is, the run resolves against that PR's candidate commit, the complete
-  # unchanged index layout installed as the built-in index of the run's home.
-  # Drop this pin and the step that reads it once the index publishes it.
-  MCPP_INDEX_CANDIDATE: "ca42ba2b8bef4c1e68d5cbe21740be1b755d8e82"
 
 jobs:
   mcpp:
@@ -73,16 +67,8 @@ jobs:
           done
           mcpp --version
 
-      - name: Candidate index (compat.wuffs)
-        run: |
-          mcpp index update
-          # No early exit in awk: mcpp would take SIGPIPE, and pipefail report it.
-          home=$(mcpp self env | awk -F'= *' '/^MCPP_HOME/ && !h {h = $2} END {print h}')
-          test -n "$home"
-          git init -q "$RUNNER_TEMP/index"
-          git -C "$RUNNER_TEMP/index" fetch -q --depth 1 https://github.com/mcpplibs/mcpp-index "$MCPP_INDEX_CANDIDATE"
-          git -C "$RUNNER_TEMP/index" checkout -q FETCH_HEAD
-          python3 "$RUNNER_TEMP/index/tests/prepare_builtin_index.py" --home "$home"
+      - name: Refresh the published package index
+        run: mcpp index update
 
       - name: Select the toolchain
         run: |
