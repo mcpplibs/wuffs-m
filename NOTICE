@@ -1,0 +1,16 @@
+wuffs-m: C++ module wrapper
+Copyright (c) 2026 mcpp-community contributors
+
+The wrapper contributions are licensed under the Apache License, Version 2.0.
+Upstream code, copied interfaces and dependencies retain their original
+licenses and copyright notices. Wuffs is distributed under the Apache License,
+Version 2.0:
+
+  Copyright 2017 The Wuffs Authors.
+
+Its original README, LICENSE and AUTHORS are retained in upstream/wuffs/. The
+library itself is built by compat.wuffs from the same release (the tag
+archive's release/c/wuffs-v0.3.c, compiled as C++). examples/convert-to-nia is
+a C++ port of the release's example/convert-to-nia/convert-to-nia.c and keeps
+that file's copyright and license notice. Provenance and checksums are
+recorded in upstream/documents.json.

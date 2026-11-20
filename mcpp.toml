@@ -1,0 +1,48 @@
+# Module wrapper; upstream API preserved. Policy: mcpp-index/docs/mwrap.md.
+[package]
+namespace   = "mcpplibs.mwrap"
+name        = "wuffs"
+version     = "0.3.6"
+description = "Wuffs 0.3.6 C++ modules for mcpp (import mcpplibs.mwrap.wuffs;): every package's C API and the wuffs_aux C++ API over compat.wuffs, the static inline API adapted, the macros as constants"
+license     = "Apache-2.0"
+authors     = ["mcpp-community"]
+repo        = "https://github.com/mcpplibs/wuffs-m"
+platforms   = ["linux", "macos", "windows"]
+
+[targets.wuffs]
+kind = "lib"
+
+[build]
+sources      = ["src/*.cppm"]
+# <mwrap/wuffs/macros.hpp>: <wuffs-v0.3.c>'s macros as macros, for #if and the
+# type-building WUFFS_BASE__SLICE(T) family.
+include_dirs = ["include"]
+
+[dependencies]
+compat.wuffs = "0.3.6"
+
+[dev-dependencies]
+compat.gtest = "1.15.2"
+
+[package.metadata.mwrap]
+upstream-version = "0.3.6"
+
+[[runtime.deploy]]
+from = "LICENSE"
+to   = "licenses/wuffs"
+
+[[runtime.deploy]]
+from = "NOTICE"
+to   = "licenses/wuffs"
+
+[[runtime.deploy]]
+from = "upstream/wuffs/README.md"
+to   = "licenses/wuffs/upstream/wuffs"
+
+[[runtime.deploy]]
+from = "upstream/wuffs/LICENSE"
+to   = "licenses/wuffs/upstream/wuffs"
+
+[[runtime.deploy]]
+from = "upstream/wuffs/AUTHORS"
+to   = "licenses/wuffs/upstream/wuffs"
