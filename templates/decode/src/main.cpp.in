@@ -1,0 +1,95 @@
+// {{project.name}} — untrusted data through import mcpplibs.mwrap.wuffs, Wuffs'
+// memory-safe decoders: the bundled samples (a PNG, a GIF, a gzip member, a
+// JSON document), or with `mcpp run -- <image>` any image Wuffs decodes (BMP,
+// GIF, NIE, PNG, TGA, WBMP), described pixel by pixel.
+import std;
+import mcpplibs.mwrap.wuffs;
+
+using namespace mcpplibs::mwrap::wuffs;  // Wuffs' static inline helpers (wuffs_base__make_slice_u8 …)
+
+namespace {
+
+constexpr std::uint8_t sample_png[] = {0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x00, 0x00, 0x00, 0x0d, 0x49, 0x48, 0x44, 0x52, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x02, 0x08, 0x02, 0x00, 0x00, 0x00, 0xfd, 0xd4, 0x9a, 0x73, 0x00, 0x00, 0x00, 0x12, 0x49, 0x44, 0x41, 0x54, 0x78, 0xda, 0x63, 0xf8, 0xcf, 0xc0, 0xc0, 0x00, 0xc2, 0x0c, 0xff, 0x81, 0x00, 0x00, 0x1f, 0xee, 0x05, 0xfb, 0xf1, 0xab, 0xba, 0x77, 0x00, 0x00, 0x00, 0x00, 0x49, 0x45, 0x4e, 0x44, 0xae, 0x42, 0x60, 0x82};
+constexpr std::uint8_t sample_gif[] = {0x47, 0x49, 0x46, 0x38, 0x39, 0x61, 0x01, 0x00, 0x01, 0x00, 0x80, 0x00, 0x00, 0xff, 0x00, 0x00,
+                                       0x00, 0x00, 0x00, 0x2c, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x01, 0x00, 0x00, 0x02, 0x02, 0x44,
+                                       0x01, 0x00, 0x3b};
+constexpr std::uint8_t sample_gzip[] = {0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xf3, 0x48, 0xcd, 0xc9, 0xc9, 0x57, 0x48, 0x2b, 0xca, 0xcf, 0x55, 0x08, 0x2f, 0x4d, 0x4b, 0x2b, 0xd6, 0x51, 0xc8, 0xcc, 0x4b, 0xcb, 0x49, 0x2c, 0x49, 0x4d, 0x51, 0x28, 0xc9, 0x28, 0xca, 0x2f, 0x4d, 0xcf, 0x50, 0x48, 0x54, 0x70, 0xd6, 0xd6, 0x56, 0xc8, 0xcd, 0x4f, 0x29, 0xcd, 0x49, 0xd5, 0xe3, 0x02, 0x00, 0x91, 0x98, 0xc1, 0x15, 0x31, 0x00, 0x00, 0x00};
+
+// An image of any format Wuffs knows, as BGRA pixels (wuffs_aux's default).
+bool describe(std::string_view name, std::span<const std::uint8_t> bytes) {
+    wuffs_aux::DecodeImageCallbacks callbacks;
+    wuffs_aux::sync_io::MemoryInput input(bytes.data(), bytes.size());
+    wuffs_aux::DecodeImageResult res = wuffs_aux::DecodeImage(callbacks, input);
+    if (!res.error_message.empty()) {
+        std::println(std::cerr, "{}: {}", name, res.error_message);
+        return false;
+    }
+    const std::uint32_t w = res.pixbuf.pixcfg.width(), h = res.pixbuf.pixcfg.height();
+    wuffs_base__table_u8 plane = res.pixbuf.plane(0);
+    std::println("{}: {} x {} pixels", name, w, h);
+    for (std::uint32_t y = 0; y < std::min(h, 4u); ++y) {
+        std::string row;
+        for (std::uint32_t x = 0; x < std::min(w, 4u); ++x) {
+            const std::uint8_t* p = plane.ptr + y * plane.stride + x * 4;
+            row += std::format(" #{:02x}{:02x}{:02x}", p[2], p[1], p[0]);  // BGRA -> #rrggbb
+        }
+        std::println("  {}{}", row, w > 4 ? " …" : "");
+    }
+    return true;
+}
+
+// A gzip member through the C API: Wuffs' decoder and its transform_io.
+std::string gunzip(std::span<const std::uint8_t> bytes) {
+    auto decoder = wuffs_gzip__decoder::alloc();
+    std::vector<std::uint8_t> out(1 << 16);
+    wuffs_base__io_buffer src = wuffs_base__ptr_u8__reader(const_cast<std::uint8_t*>(bytes.data()), bytes.size(), true);
+    wuffs_base__io_buffer dst = wuffs_base__ptr_u8__writer(out.data(), out.size());
+    wuffs_base__status status = decoder->transform_io(&dst, &src, wuffs_base__empty_slice_u8());
+    if (!status.is_ok()) return std::string("error: ") + status.message();
+    return std::string(reinterpret_cast<const char*>(out.data()), dst.meta.wi);
+}
+
+// A JSON document walked token by token (wuffs_aux::DecodeJson).
+struct Keys : wuffs_aux::DecodeJsonCallbacks {
+    int depth = 0;
+    std::string AppendNull() override { return ""; }
+    std::string AppendBool(bool) override { return ""; }
+    std::string AppendF64(double v) override { std::println("  number {}", v); return ""; }
+    std::string AppendI64(std::int64_t v) override { std::println("  integer {}", v); return ""; }
+    std::string AppendTextString(std::string&& v) override { std::println("  string \"{}\"", v); return ""; }
+    std::string Push(std::uint32_t) override { ++depth; return ""; }
+    std::string Pop(std::uint32_t) override { --depth; return ""; }
+};
+
+}  // namespace
+
+int main(int argc, char** argv) {
+    if (argc > 1) {
+        std::ifstream file(argv[1], std::ios::binary);
+        std::vector<std::uint8_t> bytes{std::istreambuf_iterator<char>(file), {}};
+        if (!file && bytes.empty()) {
+            std::println(std::cerr, "cannot read {}", argv[1]);
+            return 1;
+        }
+        return describe(argv[1], bytes) ? 0 : 1;
+    }
+
+    bool ok = describe("sample.png", sample_png) && describe("sample.gif", sample_gif);
+    const std::string text = gunzip(sample_gzip);
+    std::print("sample.gz: {}", text);
+    ok = ok && text.starts_with("Hello from Wuffs");
+
+    Keys keys;
+    const std::string json = R"({"name": "wuffs", "version": [0, 3, 6], "ratio": 0.5})";
+    wuffs_aux::sync_io::MemoryInput input(json.data(), json.size());
+    std::println("sample.json:");
+    wuffs_aux::DecodeJsonResult res = wuffs_aux::DecodeJson(keys, input);
+    ok = ok && res.error_message.empty() && keys.depth == 0;
+
+    // Untrusted means truncated, too: the decoder reports it, it does not read past the end.
+    std::span<const std::uint8_t> cut(sample_png, 40);
+    wuffs_aux::sync_io::MemoryInput partial(cut.data(), cut.size());
+    wuffs_aux::DecodeImageCallbacks callbacks;
+    std::println("truncated.png: {}", wuffs_aux::DecodeImage(callbacks, partial).error_message);
+    return ok ? 0 : 1;
+}

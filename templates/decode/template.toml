@@ -1,0 +1,4 @@
+[template]
+description  = "Untrusted data with import mcpplibs.mwrap.wuffs: images (PNG, GIF, BMP, TGA, WBMP, NIE), gzip and JSON decoded by Wuffs' memory-safe decoders"
+default      = true
+post_message = "Run `mcpp run` (decodes the bundled samples), or `mcpp run -- <image>` to describe any image Wuffs decodes."

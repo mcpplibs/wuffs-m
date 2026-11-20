@@ -1,0 +1,12 @@
+[package]
+name        = "convert-to-nia"
+version     = "0.1.0"
+description = "Wuffs' convert-to-nia (0.3.6), ported to C++23 against import mcpplibs.mwrap.wuffs; tools/run_conformance.py compares it with upstream's program on the release's test data"
+license     = "Apache-2.0"
+
+[targets.convert-to-nia]
+kind = "bin"
+main = "src/main.cpp"
+
+[dependencies]
+mcpplibs.mwrap.wuffs = { path = "../.." }

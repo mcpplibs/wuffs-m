@@ -1,0 +1,10 @@
+{
+  "upstream": "https://github.com/google/wuffs/archive/refs/tags/v0.3.6.tar.gz",
+  "upstream_sha256": "e669099e0f67123efa1d24f88f4ec26ef9875bc7d8957e0d4d9df9803ff5c039",
+  "pruning": "Nothing of Wuffs is vendored: the library is compat.wuffs 0.3.6, release/c/wuffs-v0.3.c of the same tag archive compiled as C++ under WUFFS_IMPLEMENTATION. Its README, LICENSE and AUTHORS are retained here. The conformance run (tools/run_conformance.py) builds upstream's example/convert-to-nia from the same archive and compares it, image by image over test/data, with the port in examples/convert-to-nia written against the module.",
+  "documents": [
+    {"path": "upstream/wuffs/README.md", "source": "https://github.com/google/wuffs/blob/v0.3.6/README.md", "sha256": "094606f0c199a386aee035ad02484e3dfb97ed9864e21125c611bdb7fbf22fb9"},
+    {"path": "upstream/wuffs/LICENSE", "source": "https://github.com/google/wuffs/blob/v0.3.6/LICENSE", "sha256": "0d542e0c8804e39aa7f37eb00da5a762149dc682d7829451287e11b938e94594"},
+    {"path": "upstream/wuffs/AUTHORS", "source": "https://github.com/google/wuffs/blob/v0.3.6/AUTHORS", "sha256": "2047ae601a1fc0a80e251c32a668e443f3fb43e34a77adc7eace03d161ba8543"}
+  ]
+}
